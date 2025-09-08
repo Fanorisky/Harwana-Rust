@@ -1,0 +1,15 @@
+[package]
+name = "omp-codegen"
+version = "0.3.0"
+authors = ["Sreyas <sreyassreelal@gmail.com>"]
+description = "Codegen for omprs"
+license = "Apache-2.0"
+repository = "https://github.com/sreyas-sreelal/omprs-gdk/"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = {version="2.0",features=["full"]}
+quote = "1.0"
