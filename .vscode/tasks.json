@@ -1,0 +1,20 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+		    "label": "Build and Copy DLL",
+		    "type": "shell",
+		    "command": "cargo build --target i686-pc-windows-gnu --release && cp --remove-destination target/i686-pc-windows-gnu/release/harwana.dll gamemodes/",
+		    "options": {
+		        "cwd": "${workspaceFolder}"
+		    },
+		    "group": {
+		        "kind": "build",
+		        "isDefault": true
+		    },
+		    "problemMatcher": [
+				"$rustc"
+			]
+		}
+	]
+}

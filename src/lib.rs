@@ -1,3 +1,5 @@
+mod command;
+
 mod spawns;
 use spawns::SpawnLocations;
 use std::{
@@ -11,8 +13,7 @@ use std::{
 use omp::{
     classes::CreateClass,
     core::{
-        DisableInteriorEnterExits, EnableStuntBonusForAll, SetGameModeText, SetNameTagDrawDistance,
-        SetWeather, SetWorldTime, ShowNameTags, ShowPlayerMarkers,
+        DisableInteriorEnterExits, EnableStuntBonusForAll, GetTickCount, SetGameModeText, SetNameTagDrawDistance, SetWeather, SetWorldTime, ShowNameTags, ShowPlayerMarkers
     },
     events::Events,
     main,
@@ -64,6 +65,7 @@ impl GrandLarc {
                     PlayerCameraCutType::Move,
                 );
             }
+            
             Some(Cities::SanFierro) => {
                 player.set_interior(3);
                 player.set_pos(Vector3::new(-2673.8381, 1399.7424, 918.3516));
@@ -254,6 +256,20 @@ impl Events for GrandLarc {
         );
     }
 
+    fn on_player_command_text(&mut self, player: Player, message: String) -> bool {
+        if message == "/help" {
+            println!("Si kontol id: {} mencoba: {message}", player.get_id());
+            let mut anjim = 0;
+            while anjim < 5000 {
+                player.send_client_message(self.colour_white, "Coeg amat lu: {anjim}");
+                anjim += 1;
+            }
+            
+            return true;
+        }
+        false
+    }
+
     fn on_player_spawn(&mut self, player: Player) {
         if player.is_npc() {
             return;
@@ -422,7 +438,7 @@ fn create_helper_td() -> TextDraw {
 
 #[main]
 pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
-    SetGameModeText("Grand Larceny");
+    SetGameModeText("Harwana Test");
     ShowPlayerMarkers(1);
     ShowNameTags(true);
     SetNameTagDrawDistance(40.0);
@@ -430,6 +446,7 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
     DisableInteriorEnterExits();
     SetWeather(2);
     SetWorldTime(11);
+    println!("memek");
 
     let game = GrandLarc {
         class_selection_helper_td: create_helper_td(),
@@ -464,6 +481,15 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
         "tierra",
         "red_county",
     ];
+
+    println!("Tick: {}", GetTickCount());
+
+    // Kenceng banget ancrit
+    /*let mut memek = 0; 
+    while memek < 5000 {
+        println!("{memek}");
+        memek += 1;
+    }*/
 
     let mut total_vehicles = 0;
     for file in vehicle_file_list {
