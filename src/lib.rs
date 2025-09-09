@@ -50,6 +50,7 @@ struct GrandLarc {
     san_fierro_td: TextDraw,
     las_venturas_td: TextDraw,
     spawn_locations: SpawnLocations,
+    command_processor: command::CommandProcessor, // <--- ini baru
 }
 
 impl GrandLarc {
@@ -257,17 +258,7 @@ impl Events for GrandLarc {
     }
 
     fn on_player_command_text(&mut self, player: Player, message: String) -> bool {
-        if message == "/help" {
-            println!("Si kontol id: {} mencoba: {message}", player.get_id());
-            let mut anjim = 0;
-            while anjim < 5000 {
-                player.send_client_message(self.colour_white, "Coeg amat lu: {anjim}");
-                anjim += 1;
-            }
-            
-            return true;
-        }
-        false
+        self.command_processor.process(player, &message, self.colour_white)
     }
 
     fn on_player_spawn(&mut self, player: Player) {
@@ -447,6 +438,11 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
     SetWeather(2);
     SetWorldTime(11);
     println!("memek");
+    
+    //Inisialisasi Command
+    let mut cp = command::CommandProcessor::new();
+    command::default_commands(&mut cp);
+    //------//
 
     let game = GrandLarc {
         class_selection_helper_td: create_helper_td(),
@@ -456,6 +452,7 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
         spawn_locations: SpawnLocations::new(),
         players_data: HashMap::new(),
         colour_white: Colour::from_rgba(0xFFFFFFFF),
+        command_processor: cp, // <--- pakai command processor
     };
 
     register!(game);
