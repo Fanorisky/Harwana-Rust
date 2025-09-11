@@ -94,9 +94,6 @@
         "use_omp_encryption": false
     },
     "password": "",
-    "rust":{
-	    "gamemode":"harwana"
-    },
     "rcon": {
         "allow_teleport": false,
         "enable": true,

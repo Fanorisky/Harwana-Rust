@@ -1,3 +1,6 @@
+#[macro_use]
+mod helper;
+
 mod spawns;
 use spawns::SpawnLocations;
 use std::{
@@ -440,7 +443,8 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
         players_data: HashMap::new(),
         colour_white: Colour::from_rgba(0xFFFFFFFF),
     };
-    printIn("Memek");
+
+    log!("Harwana Loaded");
 
     register!(game);
 
