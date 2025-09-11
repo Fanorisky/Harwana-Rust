@@ -1,5 +1,3 @@
-mod command;
-
 mod spawns;
 use spawns::SpawnLocations;
 use std::{
@@ -11,9 +9,10 @@ use std::{
 };
 
 use omp::{
-    classes::CreateClass,
+    classes,
     core::{
-        DisableInteriorEnterExits, EnableStuntBonusForAll, GetTickCount, SetGameModeText, SetNameTagDrawDistance, SetWeather, SetWorldTime, ShowNameTags, ShowPlayerMarkers
+        DisableInteriorEnterExits, EnableStuntBonusForAll, SetGameModeText,
+        SetNameTagsDrawDistance, SetWeather, SetWorldTime, ShowNameTags, ShowPlayerMarkers,
     },
     events::Events,
     main,
@@ -44,13 +43,12 @@ struct PlayerData {
 
 struct GrandLarc {
     colour_white: Colour,
-    players_data: HashMap<usize, PlayerData>,
+    players_data: HashMap<i32, PlayerData>,
     class_selection_helper_td: TextDraw,
     los_santos_td: TextDraw,
     san_fierro_td: TextDraw,
     las_venturas_td: TextDraw,
     spawn_locations: SpawnLocations,
-    command_processor: command::CommandProcessor, // <--- ini baru
 }
 
 impl GrandLarc {
@@ -66,7 +64,6 @@ impl GrandLarc {
                     PlayerCameraCutType::Move,
                 );
             }
-            
             Some(Cities::SanFierro) => {
                 player.set_interior(3);
                 player.set_pos(Vector3::new(-2673.8381, 1399.7424, 918.3516));
@@ -242,7 +239,7 @@ impl GrandLarc {
 
 impl Events for GrandLarc {
     fn on_player_connect(&mut self, player: Player) {
-        player.game_text("~w~Grand Larceny", 3000, 4);
+        player.show_game_text("~w~Grand Larceny", 3000, 4);
         player.send_client_message(
             self.colour_white,
             "Welcome to {88AA88}G{FFFFFF}rand {88AA88}L{FFFFFF}arceny",
@@ -255,10 +252,6 @@ impl Events for GrandLarc {
                 has_city_selected: false,
             },
         );
-    }
-
-    fn on_player_command_text(&mut self, player: Player, message: String) -> bool {
-        self.command_processor.process(player, &message, self.colour_white)
     }
 
     fn on_player_spawn(&mut self, player: Player) {
@@ -294,23 +287,23 @@ impl Events for GrandLarc {
         player.toggle_clock(false);
     }
 
-    fn on_player_death(&mut self, player: Player, killer: Option<Player>, _reason: isize) {
+    fn on_player_death(&mut self, player: Player, killer: Option<Player>, _reason: i32) {
         self.players_data
             .get_mut(&player.get_id())
             .unwrap()
             .has_city_selected = false;
-        if killer.is_none() {
-            player.reset_money();
-        } else {
+        if let Some(killer) = killer {
             let playercash = player.get_money();
             if playercash > 0 {
-                killer.unwrap().give_money(playercash);
+                killer.give_money(playercash);
                 player.reset_money();
             }
+        } else {
+            player.reset_money();
         }
     }
 
-    fn on_player_request_class(&mut self, player: Player, _class_id: usize) -> bool {
+    fn on_player_request_class(&mut self, player: Player, _class_id: i32) -> bool {
         if player.is_npc() {
             return true;
         }
@@ -328,7 +321,7 @@ impl Events for GrandLarc {
         false
     }
 
-    fn on_player_update(&mut self, player: Player, _now: isize) -> bool {
+    fn on_player_update(&mut self, player: Player) -> bool {
         if player.is_npc() {
             return true;
         }
@@ -356,7 +349,7 @@ fn create_all_class() {
         82, 83, 84, 85, 87, 88, 89, 91, 92, 93, 95, 96, 97, 98, 99,
     ];
     for x in skins {
-        CreateClass(
+        classes::Class::add(
             255,
             x,
             Vector3::new(1759.0189, -1_898.126, 13.5622),
@@ -372,13 +365,13 @@ fn load_static_vehicles_from_file(path: &str) -> Result<isize, Box<dyn std::erro
     let mut count = 0;
     for line in lines.map_while(Result::ok) {
         let mut seperator = line.split(',');
-        let modelid: isize = seperator.next().unwrap().parse()?;
+        let modelid: i32 = seperator.next().unwrap().parse()?;
         let x: f32 = seperator.next().unwrap().parse()?;
         let y: f32 = seperator.next().unwrap().parse()?;
         let z: f32 = seperator.next().unwrap().parse()?;
         let rotation: f32 = seperator.next().unwrap().parse()?;
-        let colour1: isize = seperator.next().unwrap().parse()?;
-        let colour2: isize = seperator
+        let colour1: i32 = seperator.next().unwrap().parse()?;
+        let colour2: i32 = seperator
             .next()
             .unwrap()
             .split(' ')
@@ -429,20 +422,14 @@ fn create_helper_td() -> TextDraw {
 
 #[main]
 pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
-    SetGameModeText("Harwana Test");
+    SetGameModeText("Grand Larceny");
     ShowPlayerMarkers(1);
     ShowNameTags(true);
-    SetNameTagDrawDistance(40.0);
+    SetNameTagsDrawDistance(40.0);
     EnableStuntBonusForAll(false);
     DisableInteriorEnterExits();
     SetWeather(2);
     SetWorldTime(11);
-    println!("memek");
-    
-    //Inisialisasi Command
-    let mut cp = command::CommandProcessor::new();
-    command::default_commands(&mut cp);
-    //------//
 
     let game = GrandLarc {
         class_selection_helper_td: create_helper_td(),
@@ -452,7 +439,6 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
         spawn_locations: SpawnLocations::new(),
         players_data: HashMap::new(),
         colour_white: Colour::from_rgba(0xFFFFFFFF),
-        command_processor: cp, // <--- pakai command processor
     };
 
     register!(game);
@@ -479,21 +465,13 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
         "red_county",
     ];
 
-    println!("Tick: {}", GetTickCount());
-
-    // Kenceng banget ancrit
-    /*let mut memek = 0; 
-    while memek < 5000 {
-        println!("{memek}");
-        memek += 1;
-    }*/
-
     let mut total_vehicles = 0;
     for file in vehicle_file_list {
-        total_vehicles += load_static_vehicles_from_file(&format!("vehicles/{file}.txt"))?;
+        total_vehicles +=
+            load_static_vehicles_from_file(&format!("scriptfiles/vehicles/{file}.txt"))?;
     }
 
-    omp::core::Print(&format!("Total vehicles from files: {total_vehicles}"));
+    omp::core::Log(&format!("Total vehicles from files: {total_vehicles}"));
 
     Ok(())
 }
