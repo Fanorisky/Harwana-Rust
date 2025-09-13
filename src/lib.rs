@@ -1,6 +1,8 @@
 #[macro_use]
 mod helper;
 
+mod easing;
+
 mod spawns;
 use spawns::SpawnLocations;
 use std::{
@@ -11,17 +13,15 @@ use std::{
     time::Instant,
 };
 
+mod server;
+use server::ServerRule;
+
 use omp::{
-    classes,
-    core::{
-        DisableInteriorEnterExits, EnableStuntBonusForAll, SetGameModeText,
-        SetNameTagsDrawDistance, SetWeather, SetWorldTime, ShowNameTags, ShowPlayerMarkers,
-    },
+    core::MaxPlayers,
     events::Events,
     main,
     players::{
         Player, PlayerCameraCutType, PlayerKeys, PlayerState, PlayerWeapon, WeaponSlotData,
-        WeaponSlots,
     },
     register,
     textdraws::{TextDraw, TextDrawStyle},
@@ -44,7 +44,7 @@ struct PlayerData {
     pub has_city_selected: bool,
 }
 
-struct GrandLarc {
+struct Harwana {
     colour_white: Colour,
     players_data: HashMap<i32, PlayerData>,
     class_selection_helper_td: TextDraw,
@@ -54,7 +54,7 @@ struct GrandLarc {
     spawn_locations: SpawnLocations,
 }
 
-impl GrandLarc {
+impl Harwana {
     pub fn setup_char_selection(&self, player: &Player) {
         match self.players_data[&player.get_id()].selected_city {
             Some(Cities::LosSantos) => {
@@ -240,7 +240,7 @@ impl GrandLarc {
     }
 }
 
-impl Events for GrandLarc {
+impl Events for Harwana {
     fn on_player_connect(&mut self, player: Player) {
         player.show_game_text("~w~Grand Larceny", 3000, 4);
         player.send_client_message(
@@ -255,6 +255,16 @@ impl Events for GrandLarc {
                 has_city_selected: false,
             },
         );
+    }
+
+    fn on_player_text(&mut self, player: Player, message: String) -> bool {
+        log!("Player {} bilang {message}", player.get_id());
+        false
+    }
+
+    fn on_player_command_text(&mut self, player: Player, message: String) -> bool {
+        log!("Player {} menggunakan {message}", player.get_id());
+        true
     }
 
     fn on_player_spawn(&mut self, player: Player) {
@@ -329,6 +339,8 @@ impl Events for GrandLarc {
             return true;
         }
 
+        log!("Update");
+
         if !self.players_data[&player.get_id()].has_city_selected
             && player.get_state() == PlayerState::Spectating
         {
@@ -341,24 +353,6 @@ impl Events for GrandLarc {
             return false;
         }
         true
-    }
-}
-
-fn create_all_class() {
-    let skins = vec![
-        298, 299, 300, 301, 302, 303, 304, 305, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289,
-        265, 266, 267, 268, 269, 270, 1, 2, 3, 4, 5, 6, 8, 42, 65, 86, 119, 149, 208, 273, 289, 47,
-        48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 68, 69, 70, 71, 72, 73, 75, 76, 78, 79, 80, 81,
-        82, 83, 84, 85, 87, 88, 89, 91, 92, 93, 95, 96, 97, 98, 99,
-    ];
-    for x in skins {
-        classes::Class::add(
-            255,
-            x,
-            Vector3::new(1759.0189, -1_898.126, 13.5622),
-            266.4503,
-            WeaponSlots::default(),
-        );
     }
 }
 
@@ -425,16 +419,9 @@ fn create_helper_td() -> TextDraw {
 
 #[main]
 pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
-    SetGameModeText("Grand Larceny");
-    ShowPlayerMarkers(1);
-    ShowNameTags(true);
-    SetNameTagsDrawDistance(40.0);
-    EnableStuntBonusForAll(false);
-    DisableInteriorEnterExits();
-    SetWeather(2);
-    SetWorldTime(11);
+    ServerRule(); // Setup Server Rule
 
-    let game = GrandLarc {
+    let game = Harwana {
         class_selection_helper_td: create_helper_td(),
         los_santos_td: create_city_name_td("Los Santos"),
         san_fierro_td: create_city_name_td("San Fierro"),
@@ -448,7 +435,7 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
 
     register!(game);
 
-    create_all_class();
+    log!("Max Player: {}", MaxPlayers());
 
     let vehicle_file_list = [
         "trains",

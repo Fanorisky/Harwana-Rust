@@ -59,6 +59,7 @@ impl Parse for CreateCallback {
         })
     }
 }
+
 pub fn create_callback(input: TokenStream) -> TokenStream {
     let callback = parse_macro_input!(input as CreateCallback);
     let user_func_name = callback.name;

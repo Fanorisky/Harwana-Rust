@@ -9,3 +9,13 @@ crate-type = ["cdylib"]
 [dependencies]
 omp = {path="deps/omp"}
 rand = "0.8.5"
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+[profile.dev]
+opt-level = 0          
+debug = true           
+incremental = true     
+codegen-units = 256    
+lto = false            
+panic = "abort"        
+
