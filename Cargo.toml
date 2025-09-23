@@ -5,9 +5,11 @@ edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
+path = "gamemodes/lib.rs"
 
 [dependencies]
 omp = {path="deps/omp"}
+omprs-streamer = {path="deps/omprs-streamer"}
 rand = "0.8.5"
 rusqlite = { version = "0.32", features = ["bundled"] }
 

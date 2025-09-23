@@ -88,6 +88,7 @@ name = "harwana"
 version = "0.1.0"
 dependencies = [
  "omp",
+ "omprs-streamer",
  "rand",
  "rusqlite",
 ]
@@ -167,6 +168,13 @@ dependencies = [
  "paste",
  "uuid",
  "windows",
+]
+
+[[package]]
+name = "omprs-streamer"
+version = "1.0.0"
+dependencies = [
+ "omp",
 ]
 
 [[package]]

@@ -1,7 +1,7 @@
 #[macro_use]
 mod helper;
 
-mod easing;
+pub mod define;
 
 mod spawns;
 use spawns::SpawnLocations;
@@ -14,7 +14,7 @@ use std::{
 };
 
 mod server;
-use server::ServerRule;
+use server::{ServerRule, MyAuth};
 
 use omp::{
     core::MaxPlayers,
@@ -45,7 +45,6 @@ struct PlayerData {
 }
 
 struct Harwana {
-    colour_white: Colour,
     players_data: HashMap<i32, PlayerData>,
     class_selection_helper_td: TextDraw,
     los_santos_td: TextDraw,
@@ -242,11 +241,17 @@ impl Harwana {
 
 impl Events for Harwana {
     fn on_player_connect(&mut self, player: Player) {
-        player.show_game_text("~w~Grand Larceny", 3000, 4);
-        player.send_client_message(
-            self.colour_white,
-            "Welcome to {88AA88}G{FFFFFF}rand {88AA88}L{FFFFFF}arceny",
+        ClientMessage!(
+            player,
+            0xFFFFFFFF,
+            "{FFFFFF}Welcome to {88AA88}G{FFFFFF}rand {88AA88}L{FFFFFF}arceny",
         );
+
+        ServerMessage!(player, "Memek");
+        InfoMessage!(player, "Ygy");
+        ErrorMessage!(player, "Test Error");
+        WarningMessage!(player, "Mampus");
+        SyntaxMessage!(player, "WARNING");
         self.players_data.insert(
             player.get_id(),
             PlayerData {
@@ -339,7 +344,7 @@ impl Events for Harwana {
             return true;
         }
 
-        log!("Update");
+        //log!("Update");
 
         if !self.players_data[&player.get_id()].has_city_selected
             && player.get_state() == PlayerState::Spectating
@@ -428,12 +433,12 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
         las_venturas_td: create_city_name_td("Las Venturas"),
         spawn_locations: SpawnLocations::new(),
         players_data: HashMap::new(),
-        colour_white: Colour::from_rgba(0xFFFFFFFF),
     };
 
-    log!("Harwana Loaded");
+    println!("Harwana Loaded");
 
     register!(game);
+    register!(MyAuth);
 
     log!("Max Player: {}", MaxPlayers());
 
