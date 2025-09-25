@@ -1,3 +1,4 @@
 target/
 omp-capi/
 log.txt
+logs/
