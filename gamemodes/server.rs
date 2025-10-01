@@ -6,21 +6,6 @@ use omp::{
     }
 };
 
-use omp::events::Events;
-use omp::players::Player;
-use omp::types::colour::Colour;
-
-// bikin struct sendiri
-pub struct MyAuth;
-
-// implementasi Events untuk struct MyAuth
-impl Events for MyAuth {
-    fn on_player_connect(&mut self, player: Player) {
-        // contoh minimal: kirim pesan ke player saat connect
-        player.send_client_message(Colour::from_rgba(0x77ff0000), "Jembut!");
-    }
-}
-
 #[allow(non_snake_case)]
 pub fn ServerRule()
 {

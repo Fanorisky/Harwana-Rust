@@ -9,9 +9,13 @@ path = "gamemodes/lib.rs"
 
 [dependencies]
 omp = {path="deps/omp"}
-omprs-streamer = {path="deps/omprs-streamer"}
+omprs-command = {path="deps/omprs-command"}
+once_cell = "1.21.3"
+ctor = "0.2"
+strsim = "0.10"
 rand = "0.8.5"
-rusqlite = { version = "0.32", features = ["bundled"] }
+mysql_async = "0.33"
+tokio = { version = "1", features = ["full"] }
 
 [profile.dev]
 opt-level = 0          
