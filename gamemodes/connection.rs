@@ -19,8 +19,4 @@ impl Database {
         println!("-----------------------------------------------");
         Ok(())
     }
-
-    pub async fn shutdown(self) -> Result<(), mysql_async::Error> {
-        self.pool.disconnect().await
-    }
 }

@@ -14,20 +14,15 @@ mod server;
 use server::{ServerRule};
 
 use omp::{
-    core::MaxPlayers,
+    core::{MaxPlayers, SendRconCommand, SetGameModeText},
     events::Events,
     main,
-    players::{
-        Player, PlayerCameraCutType, PlayerKeys, PlayerState, PlayerWeapon, WeaponSlotData,
-    },
+    players::Player,
     register,
-    textdraws::{TextDraw, TextDrawStyle},
-    types::{
-        colour::Colour,
-        vector::{Vector2, Vector3},
-    },
-    vehicles,
+    types::colour::Colour,
 };
+
+const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 struct PlayerData;
 
@@ -178,20 +173,25 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
 
     rt.block_on(async {
         // OnGameModeInit
-        let db = Database::new("mysql://root:password@localhost:3306/test_db");
+        let db = Database::new("mysql://root:rootpass@localhost:3306/hrp");
 
         match db.init().await {
             Ok(_) => {
-                println!("Server ready! (set GameModeText dll.)");
+                SetGameModeText(&format!("Project {SERVER_VERSION}"));
             }
             Err(e) => {
                 println!("-----------------------------------------------");
                 println!("Gagal terhubung ke database: {}", e);
                 println!("Server dalam mode maintenance...");
                 println!("-----------------------------------------------");
+                // Lock down the server to prevent players from joining during DB failure.
+                SendRconCommand("password PvNIGGAmQjXEsCq");
+                SendRconCommand("name Server dalam pemeliharaan!");
                 return; // stop kalau DB gagal
             }
         }
+
+        log!("{SERVER_VERSION}");
 
         ServerRule(); // Setup Server Rule
     
@@ -205,9 +205,6 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
         //register!(MyAuth); // Biadap Jembot
     
         log!("Max Player: {}", MaxPlayers());
-        // OnGameModeExit
-        db.shutdown().await.unwrap();
-        println!("Database disconnected. Server shutting down.");
     });
 
     Ok(())
