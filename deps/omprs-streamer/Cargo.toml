@@ -1,0 +1,15 @@
+[package]
+name = "omprs-streamer"
+version = "0.0.1"
+authors = ["Fanorisky <fanorisky168@gmail.com>"]
+description = "streamer-api for omprs"
+edition = "2021"
+
+[dependencies]
+log = "0.4"
+omp-gdk = {path="../omp-gdk",version="2.0.0"}
+omp-codegen = {path="../omp-codegen",version="1.0.0"}
+paste = "1.0"
+uuid = { version = "1.9.1", features = ["v4"] }
+inventory = "0.3.21"
+libc = "0.2"

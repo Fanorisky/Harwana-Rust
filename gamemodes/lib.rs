@@ -4,6 +4,8 @@ use connection::Database;
 #[macro_use]
 mod helper;
 
+//use omp_codegen::add_callback;
+
 mod command;
 use command::processor::{parse_command, process_command};
 use omprs_command::command;
@@ -11,7 +13,11 @@ use omprs_command::command;
 pub mod define;
 
 mod server;
-use server::{ServerRule};
+use server::ServerRule;
+
+use omprs_streamer::{
+    core::AddNumbers,
+};
 
 use omp::{
     core::{MaxPlayers, SendRconCommand, SetGameModeText},
@@ -24,18 +30,38 @@ use omp::{
 
 const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-struct PlayerData;
-
 struct Harwana;
+
+use libc::c_int;
+use std::ffi::CString;
+
+#[no_mangle]
+pub extern "C" fn initialize_harwana() {
+    unsafe {
+        let s = CString::new("omp_cb_onPlayerEnter").unwrap();
+        let f = libc::dlsym(libc::RTLD_DEFAULT, s.as_ptr());
+        if !f.is_null() {
+            // <-- PENTING: gunakan tipe register yang tepat di sini
+            let reg: extern "C" fn(extern "C" fn(c_int)) = std::mem::transmute(f);
+            reg(OMPRS_OnPlayerEnter);
+            eprintln!("✅ Rust registered onPlayerEnter");
+        } else {
+            eprintln!("⚠️ omp_cb_onPlayerEnter not found");
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn OMPRS_OnPlayerEnter(playerid: c_int) {
+    eprintln!("🦀 OMPRS_OnPlayerEnter called: {}", playerid);
+}
 
 #[command(name = "clear", alias = ["clearchat", "cc"])]
 fn clearchat(player: Player, _args: &[&str], help: bool) -> bool {
     if help {
         player.send_client_message(Colour::from_rgba(0xFFFFFFFF), "/clearchat is for clear chat log");
         true
-    }
-    else
-    {
+    } else {
         for _ in 0..50 {
             player.send_client_message(Colour::from_rgba(0xFFFFFFFF), " ");
         }
@@ -51,9 +77,7 @@ fn attack(player: Player, args: &[&str], help: bool) -> bool {
             "/attack digunakan untuk menyerang target",
         );
         true
-    }
-    else
-    {
+    } else {
         if let Some(target) = args.get(0) {
             player.send_client_message(
                 Colour::from_rgba(0xFFFFFFFF),
@@ -78,9 +102,7 @@ fn r#move(player: Player, args: &[&str], help: bool) -> bool {
             "/move digunakan untuk bergerak ke arah tertentu",
         );
         true
-    }
-    else
-    {
+    } else {
         if let Some(dir) = args.get(0) {
             player.send_client_message(
                 Colour::from_rgba(0xFFFFFFFF),
@@ -120,6 +142,7 @@ impl Events for Harwana {
         ErrorMessage!(player, "Test Error");
         WarningMessage!(player, "Mampus");
         SyntaxMessage!(player, "WARNING");
+        log!("Si kontol connect");
     }
 
     fn on_player_text(&mut self, player: Player, message: String) -> bool {
@@ -127,14 +150,12 @@ impl Events for Harwana {
         false
     }
 
-
     fn on_player_command_text(&mut self, player: Player, message: String) -> bool {
         omp::core::Log(&format!("on_player_command_text: Player {} message='{}'", player.get_id(), message));
     
         if let Some((cmd, args_vec)) = parse_command(&message) {
             omp::core::Log(&format!("Parsed command '{}' args={:?}", cmd, args_vec));
     
-            // args_vec is Vec<&str>, pass slice
             let args_ref: Vec<&str> = args_vec.iter().map(|s| *s).collect();
             process_command(player, cmd, &args_ref);
             return true;
@@ -148,7 +169,7 @@ impl Events for Harwana {
         }
     }
 
-    fn on_player_death(&mut self, player: Player, killer: Option<Player>, _reason: i32) {
+    fn on_player_death(&mut self, _player: Player, _killer: Option<Player>, _reason: i32) {
     }
 
     fn on_player_request_class(&mut self, player: Player, _class_id: i32) -> bool {
@@ -168,11 +189,11 @@ impl Events for Harwana {
 
 #[main]
 pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
-    // Buat runtime manual biar mirip Pawn lifecycle
+    initialize_harwana();
+
     let rt = tokio::runtime::Runtime::new()?;
 
     rt.block_on(async {
-        // OnGameModeInit
         let db = Database::new("mysql://root:rootpass@localhost:3306/hrp");
 
         match db.init().await {
@@ -184,25 +205,25 @@ pub fn game_entry() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Gagal terhubung ke database: {}", e);
                 println!("Server dalam mode maintenance...");
                 println!("-----------------------------------------------");
-                // Lock down the server to prevent players from joining during DB failure.
                 SendRconCommand("password PvNIGGAmQjXEsCq");
                 SendRconCommand("name Server dalam pemeliharaan!");
-                return; // stop kalau DB gagal
+                return;
             }
         }
 
         log!("{SERVER_VERSION}");
 
-        ServerRule(); // Setup Server Rule
+        ServerRule();
     
         let game = Harwana;
     
         register!(game);
     
         println!("Harwana Loaded");
-    
-        //register!(game);
-        //register!(MyAuth); // Biadap Jembot
+
+        let anu: i32;
+        anu = AddNumbers(10, 15);
+        println!("Anu: {}", anu);
     
         log!("Max Player: {}", MaxPlayers());
     });

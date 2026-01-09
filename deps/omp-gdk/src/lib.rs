@@ -37,6 +37,12 @@ pub use scripting::vehicles;
 
 pub use helper::gen_uid;
 
+use inventory;
+
+pub struct Loader(pub fn());
+
+inventory::collect!(Loader);
+
 #[doc(hidden)]
 pub fn init_functions() {
     load_function!(Component_Create);
@@ -55,6 +61,10 @@ pub fn init_functions() {
     textlabels::load_functions();
     vehicles::load_functions();
     events::load_event_functions();
+    for loader in inventory::iter::<Loader>() {
+        (loader.0)();
+    }
+
 }
 
 #[repr(C)]

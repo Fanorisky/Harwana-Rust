@@ -1,4 +1,9 @@
 target/
 omp-capi/
+omp-streamer/
+omp-streamer-capi/
+omp-colandreas/
+open.mp/
 log.txt
 logs/
+full-template/
